@@ -14,13 +14,59 @@ export class RouteManager {
             usedCards: new Set()
         };
         
+        // Heart healing state
+        this.healingState = {
+            active: false,
+            player: null,
+            startCard: null,
+            availableCards: []
+        };
+        
         this.setupKeyboardHandlers();
     }
 
     // Start route planning for a player
     startRoutePlanning(player) {
-        console.log(`Starting route planning for ${player.name}`);
+        const startCard = player.currentCard;
         
+        // Check if player can use heart healing ability
+        if (this.gameManager.canUseHeartHealing(player)) {
+            this.startHeartHealing(player);
+            return;
+        }
+        
+        // Otherwise start normal route planning
+        this.beginRoutePlanning(player);
+    }
+
+    // Start heart healing phase
+    startHeartHealing(player) {
+        const startCard = player.currentCard;
+        const availableCards = this.gameManager.getAdjacentCardsForHealing(startCard);
+        
+        if (availableCards.length === 0) {
+            // No face-down cards available for healing, proceed with normal route
+            this.beginRoutePlanning(player);
+            return;
+        }
+        
+        this.healingState = {
+            active: true,
+            player: player,
+            startCard: startCard,
+            availableCards: availableCards
+        };
+        
+        // Highlight available cards for healing
+        this.highlightHealingCards(availableCards);
+        this.showHealingInstructions(player.name);
+        
+        // Add click handlers for healing
+        this.setupHealingClickHandlers();
+    }
+
+    // Begin normal route planning
+    beginRoutePlanning(player) {
         const startCard = player.currentCard;
         const cardValue = parseInt(startCard.value.charAt(0)); // Extract number from card value
         
@@ -60,6 +106,19 @@ export class RouteManager {
         }, true);
 
         document.addEventListener('keyup', (event) => {
+            // Handle healing state
+            if (this.healingState.active) {
+                const key = event.key.toLowerCase();
+                if (['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+                    // Player wants to skip healing and start route planning
+                    this.skipHealing();
+                } else if (key === 'escape') {
+                    // Cancel healing entirely
+                    this.cancelHealing();
+                }
+                return;
+            }
+            
             if (!this.routePlanningState.active) return;
             
             event.preventDefault();
@@ -260,6 +319,9 @@ export class RouteManager {
         console.log(`${this.routePlanningState.player.name} completed route to ${finalCard.value}`);
         console.log(`Starting card ${startingCard.value} flipped face down`);
         
+        // Clear healed card tracking (route was completed successfully)
+        this.gameManager.clearHealedCard();
+        
         this.clearRouteHighlights();
         this.clearRouteInstructions();
         document.body.style.cursor = '';
@@ -269,10 +331,27 @@ export class RouteManager {
     // Cancel route planning
     cancelRoute() {
         console.log('Route planning cancelled');
+        
+        // Restore healed card to face down state
+        this.gameManager.restoreHealedCard();
+        
         this.clearRouteHighlights();
         this.clearRouteInstructions();
         document.body.style.cursor = '';
         this.routePlanningState.active = false;
+    }
+
+    // Cancel healing phase
+    cancelHealing() {
+        console.log('Heart healing cancelled');
+        
+        // Clean up healing UI
+        this.clearHealingHighlights();
+        this.cleanupHealingClickHandlers();
+        this.clearHealingInstructions();
+        
+        // Reset healing state
+        this.healingState.active = false;
     }
 
     // Visual highlighting methods
@@ -423,6 +502,122 @@ export class RouteManager {
 
     // Getter for external access to route planning state
     isRoutePlanningActive() {
-        return this.routePlanningState.active;
+        return this.routePlanningState.active || this.healingState.active;
+    }
+
+    // Heart healing UI methods
+    highlightHealingCards(cards) {
+        cards.forEach(card => {
+            card.element.style.border = '3px solid #ff9800';
+            card.element.style.boxShadow = '0 0 15px #ff9800';
+            card.element.style.cursor = 'pointer';
+            card.element.classList.add('healing-available');
+        });
+    }
+
+    clearHealingHighlights() {
+        this.healingState.availableCards.forEach(card => {
+            card.element.style.border = '';
+            card.element.style.boxShadow = '';
+            card.element.style.cursor = '';
+            card.element.classList.remove('healing-available');
+        });
+    }
+
+    setupHealingClickHandlers() {
+        this.healingState.availableCards.forEach(card => {
+            const handler = (event) => {
+                event.stopPropagation();
+                this.performHealing(card);
+            };
+            card.element.addEventListener('click', handler, { once: true });
+            // Store handler for cleanup
+            card.element._healingHandler = handler;
+        });
+    }
+
+    cleanupHealingClickHandlers() {
+        this.healingState.availableCards.forEach(card => {
+            if (card.element._healingHandler) {
+                card.element.removeEventListener('click', card.element._healingHandler);
+                delete card.element._healingHandler;
+            }
+        });
+    }
+
+    performHealing(card) {
+        console.log(`Healing card: ${card.value}`);
+        
+        // Heal the card
+        this.gameManager.healCard(card);
+        
+        // Clean up healing UI
+        this.clearHealingHighlights();
+        this.cleanupHealingClickHandlers();
+        this.clearHealingInstructions();
+        
+        // Reset healing state
+        this.healingState.active = false;
+        
+        // Start normal route planning
+        this.beginRoutePlanning(this.healingState.player);
+    }
+
+    skipHealing() {
+        console.log('Skipping healing, starting route planning');
+        
+        // Clean up healing UI
+        this.clearHealingHighlights();
+        this.cleanupHealingClickHandlers();
+        this.clearHealingInstructions();
+        
+        // Reset healing state
+        this.healingState.active = false;
+        
+        // Start normal route planning
+        this.beginRoutePlanning(this.healingState.player);
+    }
+
+    showHealingInstructions(playerName) {
+        // Remove any existing instructions
+        const existingInstructions = document.getElementById('healing-instructions');
+        if (existingInstructions) {
+            existingInstructions.remove();
+        }
+        
+        // Create instruction panel
+        const instructions = document.createElement('div');
+        instructions.id = 'healing-instructions';
+        instructions.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(255, 152, 0, 0.9);
+                color: white;
+                padding: 15px;
+                border-radius: 8px;
+                z-index: 1000;
+                font-family: Arial, sans-serif;
+                max-width: 250px;
+            ">
+                <h4 style="margin: 0 0 10px 0; color: white;">
+                    ${playerName} - Heart Healing ♥
+                </h4>
+                <p style="margin: 5px 0;">Click an orange highlighted card to heal it (flip face up)</p>
+                <p style="margin: 5px 0; font-size: 12px;">
+                    • Or start planning your route to skip healing
+                </p>
+            </div>
+        `;
+        
+        document.body.appendChild(instructions);
+    }
+
+    clearHealingInstructions() {
+        const instructions = document.getElementById('healing-instructions');
+        if (instructions) {
+            instructions.remove();
+        }
     }
 }

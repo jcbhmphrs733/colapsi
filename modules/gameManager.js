@@ -5,6 +5,7 @@ export class GameManager {
         this.gridManager = gridManager;
         this.players = [];
         this.gameState = 'setup'; // setup, playing, paused, ended
+        this.healedCard = null; // Track card that was healed this turn
         
         // Initialize default players
         this.initializePlayers();
@@ -113,7 +114,6 @@ export class GameManager {
         
         console.log('All players placed on random 7-value cards');
     }
-    
     // Helper method to shuffle an array
     shuffleArray(array) {
         const shuffled = [...array];
@@ -122,5 +122,81 @@ export class GameManager {
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         return shuffled;
+    }
+
+    // Check if special abilities are unlocked
+    areSpecialAbilitiesUnlocked() {
+        const faceDownCount = this.gridManager.cards.filter(card => !card.isFaceUpCard()).length;
+        const playersCount = this.players.length;
+        
+        return faceDownCount >= playersCount;
+    }
+
+    // Get the suit of a card
+    getCardSuit(card) {
+        const value = card.value;
+        if (value.includes('♠')) return 'spades';
+        if (value.includes('♥')) return 'hearts';
+        if (value.includes('♦')) return 'diamonds';
+        if (value.includes('♣')) return 'clubs';
+        return null;
+    }
+
+    // Check if player is starting on a heart card and can use healing ability
+    canUseHeartHealing(player) {
+        const abilitiesUnlocked = this.areSpecialAbilitiesUnlocked();
+        const hasCurrentCard = !!player.currentCard;
+        const cardSuit = hasCurrentCard ? this.getCardSuit(player.currentCard) : null;
+        
+        if (!abilitiesUnlocked) return false;
+        if (!hasCurrentCard) return false;
+        return cardSuit === 'hearts';
+    }
+
+    // Get adjacent cards (8-directional with wrapping) for healing
+    getAdjacentCardsForHealing(card) {
+        const adjacent = [];
+        const directions = [
+            [-1, -1], [-1, 0], [-1, 1],  // Up-left, Up, Up-right
+            [0, -1],           [0, 1],   // Left, Right
+            [1, -1],  [1, 0],  [1, 1]    // Down-left, Down, Down-right
+        ];
+
+        directions.forEach(([rowDelta, colDelta]) => {
+            const newRow = (card.row + rowDelta + this.gridManager.rows) % this.gridManager.rows;
+            const newCol = (card.col + colDelta + this.gridManager.columns) % this.gridManager.columns;
+            
+            const adjacentCard = this.gridManager.getCardAt(newRow, newCol);
+            if (adjacentCard && !adjacentCard.isFaceUpCard()) {
+                adjacent.push(adjacentCard);
+            }
+        });
+
+        return adjacent;
+    }
+
+    // Heal a card (flip it face up)
+    healCard(card) {
+        if (card && !card.isFaceUpCard()) {
+            card.setFaceUp();
+            this.healedCard = card;
+            console.log(`Healed card: ${card.value} at [${card.row}, ${card.col}]`);
+            return true;
+        }
+        return false;
+    }
+
+    // Restore healed card to face down (when route is cancelled)
+    restoreHealedCard() {
+        if (this.healedCard) {
+            this.healedCard.setFaceDown();
+            console.log(`Restored healed card: ${this.healedCard.value} to face down`);
+            this.healedCard = null;
+        }
+    }
+
+    // Clear healed card tracking (when route is completed)
+    clearHealedCard() {
+        this.healedCard = null;
     }
 }
