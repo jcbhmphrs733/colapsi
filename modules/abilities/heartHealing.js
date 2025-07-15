@@ -38,7 +38,7 @@ export class HeartHealingAbility {
         
         // Setup UI
         this.highlightHealingCards(availableCards);
-        this.showHealingInstructions(player.name);
+        this.gameManager.updateHubAbilityInfo('hearts', player.name, { phase: 'healing' });
         this.setupHealingClickHandlers(availableCards, abilityState);
         
         return true;
@@ -78,6 +78,7 @@ export class HeartHealingAbility {
         
         // Clean up UI
         cleanupCallback();
+        this.gameManager.clearHubAbilityInfo();
         
         // Start route planning for this player with immediate readiness
         if (this.routeManager) {
@@ -92,6 +93,7 @@ export class HeartHealingAbility {
         console.log('Skipping heart healing');
         const player = abilityState.player;
         cleanupCallback();
+        this.gameManager.clearHubAbilityInfo();
         
         // Start route planning for this player with immediate readiness
         if (this.routeManager) {
@@ -106,6 +108,7 @@ export class HeartHealingAbility {
         console.log(`Skipping heart healing and moving ${movementKey}`);
         const player = abilityState.player;
         cleanupCallback();
+        this.gameManager.clearHubAbilityInfo();
         
         // Start route planning with immediate movement
         if (this.routeManager) {
@@ -257,5 +260,6 @@ export class HeartHealingAbility {
         this.clearHealingHighlights();
         this.cleanupHealingClickHandlers();
         this.clearHealingInstructions();
+        this.gameManager.clearHubAbilityInfo();
     }
 }

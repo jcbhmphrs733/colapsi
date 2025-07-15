@@ -7,19 +7,87 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="gameControls">
-        <div id="cardBackSelector">
-            <label for="cardBackStyle">Card Back Style:</label>
-            <select id="cardBackStyle">
-                <option value="blue">Blue</option>
-                <option value="green">Green</option>
-                <option value="red">Red</option>
-                <option value="grey">Grey</option>
-            </select>
+    <!-- Main Game Hub -->
+    <div id="gameHub">
+        <!-- Hub Toggle Button -->
+        <div id="hubToggle">
+            <span id="hubIcon">⚙️</span>
+            <span id="hubText">Game Hub</span>
         </div>
-        <div id="controlsIcon">🎨</div>
+        
+        <!-- Hub Content Panel -->
+        <div id="hubContent">
+            <!-- Current Turn Section -->
+            <div id="turnSection" class="hub-section">
+                <h3>Current Turn</h3>
+                <div id="turnDisplay">
+                    <!-- Turn info will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Player Information Section -->
+            <div id="playersSection" class="hub-section">
+                <h3>Players</h3>
+                <div id="playersList">
+                    <!-- Player info will be populated by JavaScript -->
+                </div>
+            </div>
+           
+            <!-- Route Information Section -->
+            <div id="routeSection" class="hub-section">
+                <h3>Route Planning</h3>
+                <div id="routeInfo">
+                    <p>No active route planning</p>
+                </div>
+            </div>
+            
+            <!-- Game Controls Section -->
+            <div id="controlsSection" class="hub-section">
+                <h3>Game Controls</h3>
+                <div id="gameControlsContainer">
+                    <button id="giveUpButton">Give Up</button>
+                    <div id="cardBackSelector">
+                        <label for="cardBackStyle">Card Back Style:</label>
+                        <select id="cardBackStyle">
+                            <option value="blue">Blue</option>
+                            <option value="green">Green</option>
+                            <option value="red">Red</option>
+                            <option value="grey">Grey</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <!-- Ability Information Section -->
+            <div id="abilitySection" class="hub-section">
+                <h3>Abilities</h3>
+                <div id="abilityInfo">
+                    <div class="ability-legend">
+                        <div class="ability-item">♥ Hearts: Healing</div>
+                        <div class="ability-item">♣ Clubs: Swapping</div>
+                        <div class="ability-item">♠ Spades: Phantom Step</div>
+                        <div class="ability-item">♦ Diamonds: Diagonal Movement</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Game Statistics Section -->
+            <div id="statsSection" class="hub-section">
+                <h3>Game Stats</h3>
+                <div id="gameStats">
+                    <!-- Game statistics will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
     </div>
+    
+    <!-- Legacy instruction panel for compatibility -->
+    <div id="instruction-panel" style="display: none;"></div>
+    
+    <!-- Main Game Grid -->
     <div id="gridContainer"></div>
+    
     <script type="module" src="main.js"></script>
 </body>
 </html>

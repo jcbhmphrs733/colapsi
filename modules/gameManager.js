@@ -43,6 +43,11 @@ export class GameManager {
         this.routeManager = routeManager;
     }
 
+    // Set main app reference for restarts
+    setMainApp(mainApp) {
+        this.mainApp = mainApp;
+    }
+
     // Add a new player
     addPlayer(name, color, tokenSymbol) {
         const id = this.players.length + 1;

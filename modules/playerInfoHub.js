@@ -1,78 +1,25 @@
-import { GridManager } from "./modules/gridManager.js";
-import { GameManager } from "./modules/gameManager.js";
-import { RouteManager } from "./modules/route.js";
-import { PlayerInfoHub } from "./modules/playerInfoHub.js";
-
-class ColapsiApp {
-    constructor() {
-        this.gridManager = null;
-        this.gameManager = null;
-        this.routeManager = null;
-        this.playerInfoHub = null;
-        this.minWidth = 980;
-        this.minHeight = 935;
+export class PlayerInfoHub {
+    constructor(gameManager, gridManager) {
+        this.gameManager = gameManager;
+        this.gridManager = gridManager;
+        this.timerInterval = null;
         this.init();
     }
 
     init() {
-        // Wait for DOM to be fully loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.setupGame();
-                this.enforceMinimumWindowSize();
-            });
-        } else {
-            this.setupGame();
-            this.enforceMinimumWindowSize();
-        }
-    }
-
-    setupGame() {
-        // Initialize grid
-        this.gridManager = new GridManager('gridContainer');
-        this.gridManager.createGrid();
-        
-        // Initialize game manager
-        this.gameManager = new GameManager(this.gridManager);
-        
-        // Give GameManager access to the main app for restarts
-        this.gameManager.setMainApp(this);
-        
-        // Initialize route manager
-        this.routeManager = new RouteManager(this.gridManager, this.gameManager);
-        
-        // Give GameManager access to RouteManager for cleanup
-        this.gameManager.setRouteManager(this.routeManager);
-        
-        // Give AbilityManager access to RouteManager for ability completion
-        this.gameManager.abilityManager.setRouteManager(this.routeManager);
-        
-        // Initialize the player info hub
-        this.playerInfoHub = new PlayerInfoHub(this.gameManager, this.gridManager);
-        
-        // Setup card back style selector
-        this.setupCardBackSelector();
-        
-        // Set default card back style to blue
-        this.changeCardBackStyle('blue');
-        
-        // Start the game
-        this.gameManager.startGame();
-        
-        // Place players on starting positions
-        this.gameManager.placePlayersOnStartingPositions();
-        
-        // Setup turn management UI
-        this.setupTurnManagement();
-        
-        console.log('Game setup complete!');
-        console.log('Current game state:', this.gameManager.getGameStats());
+        this.initializeHub();
+        this.setupEventListeners();
     }
 
     // Initialize the game hub
-    initializeGameHub() {
+    initializeHub() {
         const hubToggle = document.getElementById('hubToggle');
         const gameHub = document.getElementById('gameHub');
+        
+        if (!hubToggle || !gameHub) {
+            console.error('Hub elements not found');
+            return;
+        }
         
         // Set initial state (expanded)
         gameHub.classList.remove('collapsed');
@@ -85,51 +32,42 @@ class ColapsiApp {
         // Initialize hub sections
         this.updatePlayersDisplay();
         this.updateGameStats();
-        
+        this.updateAbilityInfo();
+    }
+
+    // Setup event listeners
+    setupEventListeners() {
         // Setup give up button in hub
         const giveUpButton = document.getElementById('giveUpButton');
-        giveUpButton.addEventListener('click', () => {
-            this.handleGiveUpClick();
-        });
+        if (giveUpButton) {
+            giveUpButton.addEventListener('click', () => {
+                this.handleGiveUpClick();
+            });
+        }
+
+        // Setup card back selector
+        const cardBackSelector = document.getElementById('cardBackStyle');
+        if (cardBackSelector) {
+            cardBackSelector.addEventListener('change', (event) => {
+                this.changeCardBackStyle(event.target.value);
+            });
+        }
     }
 
-    // Restart the entire application
-    restartApplication() {
-        console.log('Restarting application...');
-        
-        // Reset the player info hub
-        if (this.playerInfoHub) {
-            this.playerInfoHub.resetHub();
-        }
-        
-        // Clear the grid container
-        const gridContainer = document.getElementById('gridContainer');
-        if (gridContainer) {
-            gridContainer.innerHTML = '';
-        }
-        
-        // Clear any existing UI panels (no longer needed as using hub)
-        
-        // Remove any ability instructions
-        const abilityInstructions = document.querySelectorAll('[id$="-instructions"]');
-        abilityInstructions.forEach(element => element.remove());
-        
-        // Setup game again
-        this.setupGame();
-        
-        console.log('Application restarted successfully!');
+    // Start timer update interval
+    startTimerUpdateInterval() {
+        // Start timer updates every second
+        this.timerInterval = setInterval(() => {
+            this.updateTurnDisplay();
+        }, 1000);
     }
 
-    setupTurnManagement() {
-        // The turn display and give up button are now part of the hub
-        // Just update the display and start the timer
-        this.playerInfoHub.updateTurnDisplay();
-        this.playerInfoHub.startTimerUpdateInterval();
-        
-        // Start first turn automatically after a brief setup delay
-        setTimeout(() => {
-            this.startCurrentTurn();
-        }, 1000); // Give players a moment to see the setup
+    // Stop timer updates
+    stopTimerUpdates() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
     }
 
     // Update players display in the hub
@@ -320,14 +258,59 @@ class ColapsiApp {
         }
     }
 
-    // Start timer update interval (moved from createTurnDisplay)
-    startTimerUpdateInterval() {
-        // Start timer updates every second
-        this.timerInterval = setInterval(() => {
-            this.updateTurnDisplay();
-        }, 1000);
+    // Update turn display
+    updateTurnDisplay() {
+        const turnDisplay = document.getElementById('turnDisplay');
+        if (!turnDisplay) return;
+        
+        const currentPlayer = this.gameManager.getCurrentPlayer();
+        const gameStats = this.gameManager.getGameStats();
+        
+        if (!currentPlayer) {
+            // Game has ended
+            turnDisplay.innerHTML = `
+                <div style="text-align: center; color: #8B4513; background: rgba(248, 247, 244, 0.9); padding: 15px; border-radius: 8px; border: 2px solid #ddd;">
+                    <strong>Game Over!</strong>
+                </div>
+            `;
+            return;
+        }
+        
+        const remainingTime = this.gameManager.getRemainingTurnTime();
+        const timeColor = remainingTime <= 10 ? '#ff4444' : remainingTime <= 30 ? '#ffaa00' : '#4CAF50';
+        
+        // Add warning animation when time is running out
+        if (remainingTime <= 10) {
+            turnDisplay.classList.add('timer-warning');
+        } else {
+            turnDisplay.classList.remove('timer-warning');
+        }
+        
+        turnDisplay.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <div class="player-token-mini" style="background-color: ${currentPlayer.color};">
+                    ${currentPlayer.tokenSymbol}
+                </div>
+                <div>
+                    <div style="font-weight: bold; font-size: 14px;">${currentPlayer.name}</div>
+                    <div style="font-size: 11px; opacity: 0.8;">Turn ${gameStats.turnNumber}</div>
+                </div>
+            </div>
+            <div style="font-size: 11px; margin: 4px 0;">
+                Position: ${currentPlayer.currentCard ? currentPlayer.currentCard.value : 'None'}
+            </div>
+            <div style="font-size: 12px; color: ${timeColor}; font-weight: bold; text-align: center;">
+                ⏱️ ${remainingTime}s remaining
+            </div>
+        `;
+        
+        // Update other hub sections
+        this.updatePlayersDisplay();
+        this.updateGameStats();
+        this.updateAbilityInfo(); // Update ability info to refresh card counts
     }
 
+    // Handle give up button click
     handleGiveUpClick() {
         const currentPlayer = this.gameManager.getCurrentPlayer();
         if (!currentPlayer || this.gameManager.gameState !== 'playing') {
@@ -343,6 +326,7 @@ class ColapsiApp {
         this.showGiveUpConfirmation(currentPlayer);
     }
 
+    // Show give up confirmation dialog
     showGiveUpConfirmation(player) {
         // Remove any existing confirmation
         const existingConfirm = document.getElementById('giveUpConfirmation');
@@ -444,6 +428,7 @@ class ColapsiApp {
         document.addEventListener('keydown', escapeHandler);
     }
 
+    // Confirm give up action
     confirmGiveUp(player) {
         console.log(`${player.name} chose to give up voluntarily`);
         
@@ -460,124 +445,7 @@ class ColapsiApp {
         this.updateTurnDisplay();
     }
 
-    updateTurnDisplay() {
-        const turnDisplay = document.getElementById('turnDisplay');
-        if (turnDisplay) {
-            const currentPlayer = this.gameManager.getCurrentPlayer();
-            const gameStats = this.gameManager.getGameStats();
-            
-            if (!currentPlayer) {
-                // Game has ended
-                turnDisplay.innerHTML = `
-                    <div style="text-align: center; color: #8B4513; background: rgba(248, 247, 244, 0.9); padding: 15px; border-radius: 8px; border: 2px solid #ddd;">
-                        <strong>Game Over!</strong>
-                    </div>
-                `;
-                return;
-            }
-            
-            const remainingTime = this.gameManager.getRemainingTurnTime();
-            const timeColor = remainingTime <= 10 ? '#ff4444' : remainingTime <= 30 ? '#ffaa00' : '#4CAF50';
-            
-            // Add warning animation when time is running out
-            if (remainingTime <= 10) {
-                turnDisplay.classList.add('timer-warning');
-            } else {
-                turnDisplay.classList.remove('timer-warning');
-            }
-            
-            turnDisplay.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                    <div class="player-token-mini" style="background-color: ${currentPlayer.color};">
-                        ${currentPlayer.tokenSymbol}
-                    </div>
-                    <div>
-                        <div style="font-weight: bold; font-size: 14px;">${currentPlayer.name}</div>
-                        <div style="font-size: 11px; opacity: 0.8;">Turn ${gameStats.turnNumber}</div>
-                    </div>
-                </div>
-                <div style="font-size: 11px; margin: 4px 0;">
-                    Position: ${currentPlayer.currentCard ? currentPlayer.currentCard.value : 'None'}
-                </div>
-                <div style="font-size: 12px; color: ${timeColor}; font-weight: bold; text-align: center;">
-                    ⏱️ ${remainingTime}s remaining
-                </div>
-            `;
-        }
-        
-        // Update other hub sections
-        this.updatePlayersDisplay();
-        this.updateGameStats();
-        this.updateAbilityInfo(); // Update ability info to refresh card counts
-    }
-
-    startTimerUpdateInterval() {
-        // Update timer display every second
-        this.timerInterval = setInterval(() => {
-            this.updateTurnDisplay();
-        }, 1000);
-    }
-
-    startCurrentTurn() {
-        // Update display
-        this.updateTurnDisplay();
-        
-        // Check if route planning is already active
-        if (this.routeManager.isRoutePlanningActive()) {
-            console.log('Turn already in progress');
-            return;
-        }
-        
-        // Start the current player's turn automatically
-        this.routeManager.startCurrentPlayerTurn();
-        
-        // Setup listener for automatic turn transitions
-        this.setupTurnEndListener();
-    }
-
-    setupTurnEndListener() {
-        // Listen for turn end and automatically start next turn
-        const checkTurnEnd = setInterval(() => {
-            if (!this.routeManager.isRoutePlanningActive()) {
-                // Turn has ended, update display for new player
-                this.updateTurnDisplay();
-                
-                // Check if game has ended
-                if (this.gameManager.gameState === 'ended') {
-                    // Stop timer updates
-                    if (this.timerInterval) {
-                        clearInterval(this.timerInterval);
-                    }
-                    // Hide Give Up button
-                    const giveUpButton = document.getElementById('giveUpButton');
-                    if (giveUpButton) {
-                        giveUpButton.style.display = 'none';
-                    }
-                    clearInterval(checkTurnEnd);
-                    return;
-                }
-                
-                // Automatically start next player's turn after brief delay
-                setTimeout(() => {
-                    if (this.gameManager.gameState === 'playing') {
-                        this.startCurrentTurn();
-                    }
-                }, 500); // Brief pause between turns
-                
-                clearInterval(checkTurnEnd);
-            }
-        }, 100);
-    }
-
-    setupCardBackSelector() {
-        const selector = document.getElementById('cardBackStyle');
-        if (selector) {
-            selector.addEventListener('change', (event) => {
-                this.changeCardBackStyle(event.target.value);
-            });
-        }
-    }
-
+    // Change card back style
     changeCardBackStyle(style) {
         // Remove any existing card back classes
         this.gridManager.cards.forEach(card => {
@@ -592,37 +460,41 @@ class ColapsiApp {
         console.log(`Card back style changed to: ${style}`);
     }
 
-    enforceMinimumWindowSize() {
-        // Check and enforce minimum window size on load
-        this.checkWindowSize();
+    // Reset hub displays
+    resetHub() {
+        const turnDisplay = document.getElementById('turnDisplay');
+        if (turnDisplay) {
+            turnDisplay.innerHTML = '';
+        }
         
-        // Listen for window resize events
-        window.addEventListener('resize', () => {
-            this.checkWindowSize();
-        });
+        const playersList = document.getElementById('playersList');
+        if (playersList) {
+            playersList.innerHTML = '';
+        }
+        
+        const gameStats = document.getElementById('gameStats');
+        if (gameStats) {
+            gameStats.innerHTML = '';
+        }
+        
+        const routeInfo = document.getElementById('routeInfo');
+        if (routeInfo) {
+            routeInfo.innerHTML = '<p>No active route planning</p>';
+        }
+
+        // Stop timer updates
+        this.stopTimerUpdates();
     }
 
-    checkWindowSize() {
-        const currentWidth = window.innerWidth;
-        const currentHeight = window.innerHeight;
+    // Handle game end
+    handleGameEnd() {
+        // Stop timer updates
+        this.stopTimerUpdates();
         
-        // If window is smaller than minimum, try to resize it
-        if (currentWidth < this.minWidth || currentHeight < this.minHeight) {
-            const newWidth = Math.max(currentWidth, this.minWidth);
-            const newHeight = Math.max(currentHeight, this.minHeight);
-            
-            // Try to resize the window (this works in some browsers/contexts)
-            try {
-                window.resizeTo(newWidth, newHeight);
-            } catch (error) {
-                // If resizing fails, log a warning
-                console.warn(`Window is smaller than recommended minimum size (${this.minWidth}x${this.minHeight}). Current: ${currentWidth}x${currentHeight}`);
-            }
+        // Hide Give Up button
+        const giveUpButton = document.getElementById('giveUpButton');
+        if (giveUpButton) {
+            giveUpButton.style.display = 'none';
         }
     }
 }
-
-// Initialize the app when the script loads
-const app = new ColapsiApp();
-
-export { ColapsiApp };

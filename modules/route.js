@@ -111,17 +111,13 @@ export class RouteManager {
         // Add visual indicator that route planning is active
         document.body.style.cursor = 'crosshair';
         
-        // Show instructions
-        if (options.allowPhantomStep) {
-            this.showPhantomStepRouteInstructions(player.name, cardValue);
-        } else if (options.allowDiagonalMovement) {
-            this.showDiagonalMoveRouteInstructions(player.name, cardValue);
-        } else {
-            this.showRouteInstructions(player.name, cardValue);
-        }
+        // Route instructions are now displayed in the game hub
         
         console.log(`Route planning active: Player must make ${cardValue} steps from ${startCard.value}`);
         console.log('Use WASD keys to navigate, Enter to confirm, Escape to cancel');
+        
+        // Update hub route information
+        this.updateHubRouteInfo();
         
         // If immediatelyReady with firstMovement, process that movement now
         if (options.immediatelyReady && options.firstMovement) {
@@ -311,7 +307,7 @@ export class RouteManager {
         this.clearCardHighlight(removedCard);
         
         // Update instructions
-        this.updateRouteInstructions();
+        this.updateHubRouteInfo();
         
         console.log(`Backtracked: removed ${removedCard.value} from route`);
         console.log(`Current position: ${this.routePlanningState.currentCard.value}`);
@@ -388,8 +384,8 @@ export class RouteManager {
         const routeIndex = this.routePlanningState.route.length - 1;
         this.highlightCard(card, this.routePlanningState.player.color, 'route', routeIndex);
         
-        // Update instructions
-        this.updateRouteInstructions();
+        // Update hub route information
+        this.updateHubRouteInfo();
         
         console.log(`Added card ${card.value} to route (step ${routeIndex}/${this.routePlanningState.maxSteps})`);
         
@@ -431,7 +427,7 @@ export class RouteManager {
         this.gameManager.abilityManager.clearAbilityChanges();
         
         this.clearRouteHighlights();
-        this.clearRouteInstructions();
+        this.updateHubRouteInfo();
         document.body.style.cursor = '';
         this.routePlanningState.active = false;
         
@@ -450,7 +446,7 @@ export class RouteManager {
         this.gameManager.abilityManager.restoreAbilityChanges();
         
         this.clearRouteHighlights();
-        this.clearRouteInstructions();
+        this.updateHubRouteInfo();
         document.body.style.cursor = '';
         this.routePlanningState.active = false;
         
@@ -481,7 +477,6 @@ export class RouteManager {
         // Clean up route planning if active for this player
         if (this.routePlanningState.active && this.routePlanningState.player === player) {
             this.clearRouteHighlights();
-            this.clearRouteInstructions();
             document.body.style.cursor = '';
             this.routePlanningState.active = false;
         }
@@ -564,163 +559,56 @@ export class RouteManager {
         });
     }
 
-    // UI instruction methods
-    showRouteInstructions(playerName, steps) {
-        // Remove any existing instructions
-        const existingInstructions = document.getElementById('route-instructions');
-        if (existingInstructions) {
-            existingInstructions.remove();
-        }
-        
-        // Create instruction panel
-        const instructions = document.createElement('div');
-        instructions.id = 'route-instructions';
-        instructions.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 15px;
-                border-radius: 8px;
-                z-index: 1000;
-                font-family: Arial, sans-serif;
-                max-width: 250px;
-            ">
-                <h4 style="margin: 0 0 10px 0; color: ${this.routePlanningState.player.color};">
-                    ${playerName} - Route Planning
-                </h4>
-                <p style="margin: 5px 0;">Must make exactly <strong>${steps}</strong> steps</p>
-                <p style="margin: 5px 0; font-size: 12px;">
-                    • WASD/Arrow Keys: Navigate/Backtrack<br>
-                    • Grid edges wrap around<br>
-                    • Enter: Confirm route<br>
-                    • Escape: Cancel
-                </p>
-                <p style="margin: 5px 0; font-size: 11px; opacity: 0.8;">
-                    Steps: 0/${steps} (Starting position)
-                </p>
-            </div>
-        `;
-        
-        document.body.appendChild(instructions);
-    }
-
-    updateRouteInstructions() {
-        const instructions = document.getElementById('route-instructions');
-        if (instructions) {
-            const stepsDisplay = instructions.querySelector('p:last-child');
-            if (stepsDisplay) {
-                const currentSteps = this.routePlanningState.route.length - 1;
-                const maxSteps = this.routePlanningState.maxSteps;
-                stepsDisplay.innerHTML = `Steps: ${currentSteps}/${maxSteps}`;
-                
-                if (currentSteps === maxSteps) {
-                    stepsDisplay.style.color = '#4CAF50';
-                    stepsDisplay.innerHTML += ' - Ready to confirm!';
-                } else {
-                    stepsDisplay.style.color = '';
-                }
-            }
-        }
-    }
-
-    clearRouteInstructions() {
-        const instructions = document.getElementById('route-instructions');
-        if (instructions) {
-            instructions.remove();
-        }
-    }
-
-    // Show instructions for phantom step route planning
-    showPhantomStepRouteInstructions(playerName, steps) {
-        // Remove any existing instructions
-        const existingInstructions = document.getElementById('route-instructions');
-        if (existingInstructions) {
-            existingInstructions.remove();
-        }
-        
-        // Create instruction panel
-        const instructions = document.createElement('div');
-        instructions.id = 'route-instructions';
-        instructions.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: rgba(33, 33, 33, 0.9);
-                color: white;
-                padding: 15px;
-                border-radius: 8px;
-                z-index: 1000;
-                font-family: Arial, sans-serif;
-                max-width: 250px;
-            ">
-                <h4 style="margin: 0 0 10px 0; color: ${this.routePlanningState.player.color};">
-                    ${playerName} - Phantom Step ♠
-                </h4>
-                <p style="margin: 5px 0;">Must make exactly <strong>${steps}</strong> steps</p>
-                <p style="margin: 5px 0; font-size: 12px;">
-                    • May include <strong>one face-down card</strong><br>
-                    • Cannot end on face-down card<br>
-                    • WASD/Arrow Keys: Navigate/Backtrack<br>
-                    • Enter: Confirm route • Escape: Cancel
-                </p>
-                <p style="margin: 5px 0; font-size: 11px; opacity: 0.8;">
-                    Steps: 0/${steps} (Starting position)
-                </p>
-            </div>
-        `;
-        
-        document.body.appendChild(instructions);
-    }
-
-    // Show instructions for diagonal movement route planning
-    showDiagonalMoveRouteInstructions(playerName, steps) {
-        // Remove any existing instructions
-        const existingInstructions = document.getElementById('route-instructions');
-        if (existingInstructions) {
-            existingInstructions.remove();
-        }
-        
-        // Create instruction panel
-        const instructions = document.createElement('div');
-        instructions.id = 'route-instructions';
-        instructions.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: rgba(139, 0, 0, 0.9);
-                color: white;
-                padding: 15px;
-                border-radius: 8px;
-                z-index: 1000;
-                font-family: Arial, sans-serif;
-                max-width: 270px;
-            ">
-                <h4 style="margin: 0 0 10px 0; color: ${this.routePlanningState.player.color};">
-                    ${playerName} - Diagonal Movement ♦
-                </h4>
-                <p style="margin: 5px 0;">Must make exactly <strong>${steps}</strong> steps</p>
-                <p style="margin: 5px 0; font-size: 12px;">
-                    • WASD/Arrow Keys: Cardinal directions<br>
-                    • <strong>Q/E</strong>: Diagonal up-left/up-right<br>
-                    • <strong>Z/C</strong>: Diagonal down-left/down-right<br>
-                    • Enter: Confirm route • Escape: Cancel
-                </p>
-                <p style="margin: 5px 0; font-size: 11px; opacity: 0.8;">
-                    Steps: 0/${steps} (Starting position)
-                </p>
-            </div>
-        `;
-        
-        document.body.appendChild(instructions);
-    }
-
     // Getter for external access to route planning state
     isRoutePlanningActive() {
         return this.routePlanningState.active || this.gameManager.abilityManager.isAbilityActive();
+    }
+
+    // Update the route information in the game hub
+    updateHubRouteInfo() {
+        const routeInfo = document.getElementById('routeInfo');
+        if (!routeInfo) return;
+        
+        if (this.routePlanningState.active) {
+            const currentSteps = this.routePlanningState.route.length - 1;
+            const maxSteps = this.routePlanningState.maxSteps;
+            const player = this.routePlanningState.player;
+            
+            routeInfo.className = 'active';
+            routeInfo.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 6px;">
+                    ${player.name} - Planning Route
+                </div>
+                <div style="margin: 4px 0;">
+                    Steps: ${currentSteps}/${maxSteps}
+                </div>
+                <div style="margin: 4px 0;">
+                    ${this.routePlanningState.allowPhantomStep ? '♠ Phantom Step' : 
+                      this.routePlanningState.allowDiagonalMovement ? '♦ Diagonal Movement' : 
+                      'Standard Movement'}
+                </div>
+                ${currentSteps === maxSteps ? 
+                  '<div style="color: #4CAF50; font-weight: bold;">Ready to confirm!</div>' : 
+                  '<div style="opacity: 0.7;">Use WASD/Arrows to navigate</div>'}
+            `;
+        } else if (this.gameManager.abilityManager.isAbilityActive()) {
+            const abilityState = this.gameManager.abilityManager.abilityState;
+            routeInfo.className = 'active';
+            routeInfo.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 6px;">
+                    ${abilityState.player.name} - Using Ability
+                </div>
+                <div style="margin: 4px 0;">
+                    ${abilityState.type === 'hearts' ? '♥ Healing' :
+                      abilityState.type === 'clubs' ? '♣ Swapping' :
+                      abilityState.type === 'spades' ? '♠ Phantom Step' :
+                      abilityState.type === 'diamonds' ? '♦ Diagonal Movement' : 
+                      'Active Ability'}
+                </div>
+            `;
+        } else {
+            routeInfo.className = '';
+            routeInfo.innerHTML = '<p>No active route planning</p>';
+        }
     }
 }

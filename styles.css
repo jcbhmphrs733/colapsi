@@ -5,8 +5,6 @@ body {
     background-color: #f2f1ee;
     height: 100vh;
     width: 100vw;
-    min-width: 815px;
-    min-height: 935px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -15,14 +13,16 @@ body {
 }
 
 .grid-container {
+    background-color: #cac9d6e6;
+    margin-top: 20vh;
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     grid-template-rows: repeat(4, 1fr);
     gap: 1.5vh;
     width: min(90vw, 850px);
-    height: min(70vh, 650px);
-    min-width: 720px;
-    min-height: 500px;
+    height: min(60vh, 650px);
+    max-width: 80vw;
+    max-height: 60vh;
     box-sizing: border-box;
     align-items: center;
     justify-items: center;
@@ -33,7 +33,7 @@ body {
     border-radius: 8px;
     padding: 0.3vh;
     text-align: center;
-    background-color: #ffffff;
+    background-color: #f2f2e6;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -43,7 +43,7 @@ body {
     /* Maintain 2.5:3.5 aspect ratio (width:height) - cards should be taller than wide */
     aspect-ratio: 2.5 / 3.5;
     /* Only set width, let height be determined by aspect ratio */
-    width: 80%;
+    width: 75%;
     cursor: pointer;
     user-select: none;
     position: relative; /* Added for player token positioning */
@@ -368,4 +368,466 @@ body {
 #cardBackStyle option {
     background-color: #333;
     color: white;
+}
+
+/* Game Hub Styles */
+#gameHub {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(30, 30, 30, 0.95);
+    color: white;
+    border-radius: 12px;
+    z-index: 1000;
+    font-family: Arial, sans-serif;
+    width: 300px;
+    max-height: 80vh;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#gameHub.collapsed {
+    width: 150px;
+    height: 50px;
+}
+
+#hubToggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    cursor: pointer;
+    border-radius: 12px 12px 0 0;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+#hubToggle:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+#hubIcon {
+    font-size: 20px;
+    transition: transform 0.3s ease;
+}
+
+#hubText {
+    font-weight: bold;
+    font-size: 16px;
+    transition: opacity 0.3s ease;
+}
+
+#gameHub.collapsed #hubText {
+    opacity: 0;
+}
+
+#gameHub.collapsed #hubIcon {
+    transform: rotate(180deg);
+}
+
+#hubContent {
+    max-height: calc(80vh - 50px);
+    overflow-y: auto;
+    transition: all 0.3s ease;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+#gameHub.collapsed #hubContent {
+    max-height: 0;
+    opacity: 0;
+}
+
+#hubContent::-webkit-scrollbar {
+    width: 6px;
+}
+
+#hubContent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#hubContent::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.hub-section {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hub-section:last-child {
+    border-bottom: none;
+}
+
+.hub-section h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.hub-section .hub-content {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Turn Display in Hub */
+#turnDisplay {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid #4CAF50;
+}
+
+#turnDisplay.timer-warning {
+    border-left-color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+    animation: timerWarning 1s ease-in-out infinite;
+}
+
+/* Players List */
+#playersList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    border-left: 3px solid;
+    transition: all 0.2s ease;
+}
+
+.player-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.player-item.active {
+    background: rgba(255, 215, 0, 0.2);
+    border-left-color: #FFD700;
+}
+
+.player-item.eliminated {
+    opacity: 0.5;
+    background: rgba(128, 128, 128, 0.1);
+    border-left-color: #666;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.player-token-mini {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.player-status {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* Game Controls in Hub */
+#gameControlsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#giveUpButton {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+#giveUpButton:hover {
+    background: #b71c1c;
+    transform: translateY(-1px);
+}
+
+#giveUpButton:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#cardBackSelector {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#cardBackSelector label {
+    font-size: 12px;
+    color: #a0a0a0;
+}
+
+#cardBackStyle {
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#cardBackStyle:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+#cardBackStyle option {
+    background: #333;
+    color: white;
+}
+
+/* Route Information */
+#routeInfo {
+    font-size: 12px;
+    color: #a0a0a0;
+}
+
+#routeInfo.active {
+    color: white;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #4CAF50;
+}
+
+/* Ability Information */
+.ability-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ability-item {
+    font-size: 12px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.ability-item.active {
+    background: rgba(255, 215, 0, 0.2);
+    border-left: 3px solid #FFD700;
+}
+
+/* Game Statistics */
+#gameStats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: #a0a0a0;
+}
+
+.stat-value {
+    font-weight: bold;
+}
+
+/* Legacy Game Controls (now hidden) */
+#gameControls {
+    display: none;
+}
+
+/* ===== RESPONSIVE MEDIA QUERIES ===== */
+
+/* Large screens / Full screen landscape mode */
+@media screen and (min-width: 1200px) and (min-height: 800px) {
+    body {
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 20px;
+    }
+    
+    .grid-container {
+        margin-top: 0;
+        margin-bottom: 20px;
+        order: 2;
+    }
+    
+    #gameHub {
+        position: relative;
+        top: 0;
+        right: 0;
+        width: 100%;
+        max-width: 80vw; /* Wider than grid's 850px */
+        margin-bottom: 80px;
+        order: 1;
+        max-height: none;
+    }
+    
+    #hubContent {
+        max-height: none;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 15px;
+        padding: 15px 20px; /* Reduced vertical padding */
+    }
+    
+    /* Make hub sections more compact in landscape mode */
+    .hub-section {
+        padding: 10px 12px; /* Reduced from 15px 20px */
+    }
+    
+    .hub-section h3 {
+        margin: 0 0 6px 0; /* Reduced from 10px */
+        font-size: 12px; /* Slightly smaller */
+    }
+    
+    #gameHub.collapsed {
+        width: 100%;
+        height: 50px; /* Reduced from 60px */
+    }
+    
+    #gameHub.collapsed #hubContent {
+        display: none;
+    }
+}
+
+/* Medium screens / Tablet landscape */
+@media screen and (min-width: 768px) and (max-width: 1199px) {
+    #gameHub {
+        width: 280px;
+        top: 20px;
+        right: 20px;
+    }
+    
+    .grid-container {
+        margin-right: 300px; /* Make room for side hub */
+        margin-top: 10vh;
+    }
+}
+
+/* Small screens / Mobile and tablet portrait */
+@media screen and (max-width: 767px) {
+    body {
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 10px;
+    }
+    
+    .grid-container {
+        margin-top: 0;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        aspect-ratio: 6/4;
+        order: 2;
+    }
+    
+    #gameHub {
+        position: relative;
+        top: 0;
+        right: 0;
+        width: 100%;
+        margin-bottom: 15px;
+        order: 1;
+        max-height: 40vh;
+    }
+    
+    #hubContent {
+        max-height: 35vh;
+    }
+    
+    #gameHub.collapsed {
+        width: 100%;
+        height: 50px;
+    }
+    
+    .hub-section {
+        margin-bottom: 15px;
+    }
+    
+    /* Stack hub sections vertically on mobile */
+    #hubContent .hub-section h3 {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    
+    .player-item {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .stat-item {
+        font-size: 11px;
+    }
+}
+
+/* Extra small screens */
+@media screen and (max-width: 480px) {
+    body {
+        padding: 5px;
+    }
+    
+    .grid-container {
+        gap: 1vh;
+    }
+    
+    #gameHub {
+        max-height: 35vh;
+    }
+    
+    #hubContent {
+        max-height: 30vh;
+        padding: 10px;
+    }
+    
+    #hubToggle {
+        padding: 12px 15px;
+    }
+    
+    #hubText {
+        font-size: 14px;
+    }
 }

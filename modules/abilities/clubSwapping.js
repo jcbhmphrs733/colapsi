@@ -35,7 +35,7 @@ export class ClubSwappingAbility {
         
         // Setup UI - highlight all available cards
         this.highlightSwappableCards(availableCards);
-        this.showSwappingInstructions(player.name);
+        this.gameManager.updateHubAbilityInfo('clubs', player.name, { phase: 'selecting' });
         this.setupSwappingClickHandlers(abilityState);
         
         return true;
@@ -214,6 +214,7 @@ export class ClubSwappingAbility {
         console.log('Skipping club swapping');
         const player = abilityState.player;
         cleanupCallback();
+        this.gameManager.clearHubAbilityInfo();
         
         // Start route planning for this player with immediate readiness
         if (this.routeManager) {
@@ -228,6 +229,7 @@ export class ClubSwappingAbility {
         console.log(`Skipping club swapping and moving ${movementKey}`);
         const player = abilityState.player;
         cleanupCallback();
+        this.gameManager.clearHubAbilityInfo();
         
         // Start route planning with immediate movement
         if (this.routeManager) {
@@ -447,5 +449,6 @@ export class ClubSwappingAbility {
         this.clearSwappingHighlights();
         this.cleanupSwappingClickHandlers();
         this.clearSwappingInstructions();
+        this.gameManager.clearHubAbilityInfo();
     }
 }

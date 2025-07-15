@@ -104,4 +104,37 @@ export class GridManager {
             gridSize: `${this.rows}x${this.columns}`
         };
     }
+
+    // Count remaining cards by suit
+    getCardCountsBySuit() {
+        const counts = {
+            hearts: { total: 0, faceUp: 0, faceDown: 0 },
+            diamonds: { total: 0, faceUp: 0, faceDown: 0 },
+            clubs: { total: 0, faceUp: 0, faceDown: 0 },
+            spades: { total: 0, faceUp: 0, faceDown: 0 }
+        };
+
+        this.cards.forEach(card => {
+            const suit = this.getCardSuit(card.value);
+            if (suit && counts[suit]) {
+                counts[suit].total++;
+                if (card.isFaceUpCard()) {
+                    counts[suit].faceUp++;
+                } else {
+                    counts[suit].faceDown++;
+                }
+            }
+        });
+
+        return counts;
+    }
+
+    // Helper method to get suit from card value
+    getCardSuit(cardValue) {
+        if (cardValue.includes('♥')) return 'hearts';
+        if (cardValue.includes('♦')) return 'diamonds';
+        if (cardValue.includes('♣')) return 'clubs';
+        if (cardValue.includes('♠')) return 'spades';
+        return null;
+    }
 }
