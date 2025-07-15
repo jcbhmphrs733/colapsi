@@ -235,6 +235,48 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
+.player-token.active-player {
+    border: 3px solid #FFD700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    animation: pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    from {
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    }
+    to {
+        box-shadow: 0 0 25px rgba(255, 215, 0, 1);
+    }
+}
+
+.player-token.eliminated-player {
+    opacity: 0.3;
+    filter: grayscale(100%);
+    border: 2px solid #666;
+    background-color: #666 !important;
+}
+
+.player-token.eliminated-player::after {
+    content: '💀';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+}
+
+/* Timer warning animation */
+@keyframes timerWarning {
+    0% { background-color: rgba(0, 0, 0, 0.8); }
+    50% { background-color: rgba(255, 68, 68, 0.8); }
+    100% { background-color: rgba(0, 0, 0, 0.8); }
+}
+
+.timer-warning {
+    animation: timerWarning 1s ease-in-out infinite;
+}
+
 /* Game Controls */
 #gameControls {
     position: fixed;

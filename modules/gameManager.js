@@ -1,11 +1,26 @@
 import { Player } from './player.js';
+import { AbilityManager } from './abilities.js';
 
 export class GameManager {
     constructor(gridManager) {
         this.gridManager = gridManager;
         this.players = [];
         this.gameState = 'setup'; // setup, playing, paused, ended
-        this.healedCard = null; // Track card that was healed this turn
+        
+        // Initialize ability manager
+        this.abilityManager = new AbilityManager(this, gridManager);
+        
+        // Turn management
+        this.currentPlayerIndex = 0;
+        this.turnNumber = 1;
+        
+        // Timer management
+        this.turnTimer = null;
+        this.turnTimeLimit = 60; // 60 seconds per turn
+        this.turnStartTime = null;
+        
+        // Route manager reference (set later)
+        this.routeManager = null;
         
         // Initialize default players
         this.initializePlayers();
@@ -21,6 +36,11 @@ export class GameManager {
         this.players.push(player1, player2, player3, player4);
         
         console.log('Players initialized:', this.players.map(p => p.getInfo()));
+    }
+
+    // Set route manager reference
+    setRouteManager(routeManager) {
+        this.routeManager = routeManager;
     }
 
     // Add a new player
@@ -56,21 +76,188 @@ export class GameManager {
     // Start the game
     startGame() {
         this.gameState = 'playing';
+        this.currentPlayerIndex = 0;
+        this.turnNumber = 1;
+        this.updateActivePlayer();
         console.log('Game started!');
+        console.log(`Turn ${this.turnNumber}: ${this.getCurrentPlayer().name}'s turn`);
+    }
+
+    // Start turn timer
+    startTurnTimer() {
+        // Only start timer if one isn't already running
+        if (this.turnTimer) {
+            console.log('Timer already running, not restarting');
+            return;
+        }
+        
+        this.turnStartTime = Date.now();
+        
+        this.turnTimer = setTimeout(() => {
+            this.handleTurnTimeout();
+        }, this.turnTimeLimit * 1000);
+        
+        console.log(`Turn timer started: ${this.turnTimeLimit} seconds for ${this.getCurrentPlayer().name}`);
+    }
+
+    // Clear turn timer
+    clearTurnTimer() {
+        if (this.turnTimer) {
+            clearTimeout(this.turnTimer);
+            this.turnTimer = null;
+            this.turnStartTime = null;
+        }
+    }
+
+    // Handle turn timeout
+    handleTurnTimeout() {
+        const currentPlayer = this.getCurrentPlayer();
+        console.log(`⏰ TIME UP! ${currentPlayer.name} ran out of time and is eliminated from the game!`);
+        
+        // Clean up any active route planning for this player
+        this.cleanupPlayerTurn(currentPlayer);
+        
+        // Remove player from the board and flip their starting card face down
+        this.eliminatePlayer(currentPlayer);
+        
+        // Move to next turn
+        this.nextTurn();
+    }
+
+    // Clean up active turn state for a player
+    cleanupPlayerTurn(player) {
+        // This method should be called before eliminating a player
+        // to ensure all UI and state is properly cleaned up
+        console.log(`Cleaning up turn state for ${player.name}`);
+        
+        if (this.routeManager) {
+            this.routeManager.forceCleanupForTimeout(player);
+        }
+        
+        // Clean up any active abilities
+        this.abilityManager.forceCleanupForTimeout(player);
+    }
+
+    // Eliminate a player from the game
+    eliminatePlayer(player) {
+        console.log(`Eliminating ${player.name} from the game`);
+        
+        // If player is on a card, flip that card face down and remove them
+        if (player.currentCard) {
+            player.currentCard.setFaceDown();
+            player.currentCard.removePlayer(player);
+        }
+        
+        // Mark player as eliminated
+        player.isEliminated = true;
+        player.setPosition(null);
+        
+        console.log(`${player.name} has been eliminated and their card flipped face down`);
+    }
+
+    // Get remaining time for current turn
+    getRemainingTurnTime() {
+        if (!this.turnStartTime) return this.turnTimeLimit;
+        
+        const elapsed = (Date.now() - this.turnStartTime) / 1000;
+        const remaining = Math.max(0, this.turnTimeLimit - elapsed);
+        return Math.ceil(remaining);
+    }
+
+    // Get current active player
+    getCurrentPlayer() {
+        // Skip eliminated players
+        let attempts = 0;
+        while (attempts < this.players.length) {
+            const player = this.players[this.currentPlayerIndex];
+            if (player && !player.isEliminated) {
+                return player;
+            }
+            // Move to next player if current is eliminated
+            this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+            attempts++;
+        }
+        // If all players are eliminated, return null
+        return null;
+    }
+
+    // Update which player is active
+    updateActivePlayer() {
+        // Deactivate all players
+        this.players.forEach(player => player.setActive(false));
+        
+        // Activate current player
+        if (this.players[this.currentPlayerIndex]) {
+            this.players[this.currentPlayerIndex].setActive(true);
+        }
+        
+        // Update visual display of all player tokens
+        this.updatePlayerTokenVisuals();
+    }
+
+    // Update visual display of player tokens to show active state
+    updatePlayerTokenVisuals() {
+        this.gridManager.cards.forEach(card => {
+            if (card.players.length > 0) {
+                card.updatePlayerTokens();
+            }
+        });
+    }
+
+    // Advance to next player's turn
+    nextTurn() {
+        this.clearTurnTimer(); // Always clear timer when advancing turns
+        
+        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+        
+        // If we've cycled through all players, increment turn number
+        if (this.currentPlayerIndex === 0) {
+            this.turnNumber++;
+        }
+        
+        // Skip eliminated players
+        const currentPlayer = this.getCurrentPlayer();
+        
+        // Check if game should end (all players eliminated or only one left)
+        const activePlayers = this.players.filter(p => !p.isEliminated);
+        if (activePlayers.length <= 1) {
+            this.endGame();
+            return null;
+        }
+        
+        this.updateActivePlayer();
+        console.log(`Turn ${this.turnNumber}: ${currentPlayer.name}'s turn`);
+        
+        return currentPlayer;
+    }
+
+    // Check if it's a specific player's turn
+    isPlayerTurn(player) {
+        return this.getCurrentPlayer() === player;
     }
 
     // End the game
     endGame() {
+        this.clearTurnTimer(); // Clear any active timer
         this.gameState = 'ended';
         console.log('Game ended!');
         
         // Show final scores
+        const activePlayers = this.players.filter(p => !p.isEliminated);
         const scores = this.players.map(p => ({
             name: p.name,
             score: p.score,
-            moves: p.moves.length
+            moves: p.moves.length,
+            eliminated: p.isEliminated || false
         }));
+        
         console.log('Final scores:', scores);
+        
+        if (activePlayers.length === 1) {
+            console.log(`🏆 Winner: ${activePlayers[0].name}!`);
+        } else if (activePlayers.length === 0) {
+            console.log('💀 All players eliminated! No winner.');
+        }
     }
 
     // Reset the game
@@ -84,6 +271,8 @@ export class GameManager {
     getGameStats() {
         return {
             gameState: this.gameState,
+            currentPlayer: this.getCurrentPlayer()?.name,
+            turnNumber: this.turnNumber,
             players: this.players.map(p => p.getInfo())
         };
     }
@@ -142,61 +331,45 @@ export class GameManager {
         return null;
     }
 
-    // Check if player is starting on a heart card and can use healing ability
+    // Check if player can use any special ability
+    canUseAbility(player) {
+        return this.abilityManager.canUseAbility(player);
+    }
+
+    // Start ability phase for a player
+    startAbility(player, abilityType) {
+        return this.abilityManager.startAbility(player, abilityType);
+    }
+
+    // === LEGACY METHODS FOR BACKWARD COMPATIBILITY ===
+    // These delegate to the ability manager to maintain existing API
+
     canUseHeartHealing(player) {
-        const abilitiesUnlocked = this.areSpecialAbilitiesUnlocked();
-        const hasCurrentCard = !!player.currentCard;
-        const cardSuit = hasCurrentCard ? this.getCardSuit(player.currentCard) : null;
-        
-        if (!abilitiesUnlocked) return false;
-        if (!hasCurrentCard) return false;
-        return cardSuit === 'hearts';
+        return this.abilityManager.canUseHeartHealing(player);
     }
 
-    // Get adjacent cards (8-directional with wrapping) for healing
     getAdjacentCardsForHealing(card) {
-        const adjacent = [];
-        const directions = [
-            [-1, -1], [-1, 0], [-1, 1],  // Up-left, Up, Up-right
-            [0, -1],           [0, 1],   // Left, Right
-            [1, -1],  [1, 0],  [1, 1]    // Down-left, Down, Down-right
-        ];
-
-        directions.forEach(([rowDelta, colDelta]) => {
-            const newRow = (card.row + rowDelta + this.gridManager.rows) % this.gridManager.rows;
-            const newCol = (card.col + colDelta + this.gridManager.columns) % this.gridManager.columns;
-            
-            const adjacentCard = this.gridManager.getCardAt(newRow, newCol);
-            if (adjacentCard && !adjacentCard.isFaceUpCard()) {
-                adjacent.push(adjacentCard);
-            }
-        });
-
-        return adjacent;
+        return this.abilityManager.getAdjacentCardsForHealing(card);
     }
 
-    // Heal a card (flip it face up)
     healCard(card) {
-        if (card && !card.isFaceUpCard()) {
-            card.setFaceUp();
-            this.healedCard = card;
-            console.log(`Healed card: ${card.value} at [${card.row}, ${card.col}]`);
-            return true;
-        }
-        return false;
+        return this.abilityManager.healCard(card);
     }
 
-    // Restore healed card to face down (when route is cancelled)
     restoreHealedCard() {
-        if (this.healedCard) {
-            this.healedCard.setFaceDown();
-            console.log(`Restored healed card: ${this.healedCard.value} to face down`);
-            this.healedCard = null;
-        }
+        this.abilityManager.restoreHealedCard();
     }
 
-    // Clear healed card tracking (when route is completed)
     clearHealedCard() {
-        this.healedCard = null;
+        this.abilityManager.clearHealedCard();
+    }
+
+    // New methods for general ability management
+    restoreAbilityChanges() {
+        this.abilityManager.restoreAbilityChanges();
+    }
+
+    clearAbilityChanges() {
+        this.abilityManager.clearAbilityChanges();
     }
 }

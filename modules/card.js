@@ -143,10 +143,17 @@ export class Card {
             this.players.forEach(player => {
                 const token = document.createElement('div');
                 token.classList.add('player-token');
+                if (player.isActive) {
+                    token.classList.add('active-player');
+                }
+                if (player.isEliminated) {
+                    token.classList.add('eliminated-player');
+                }
                 token.style.backgroundColor = player.color;
                 token.textContent = player.tokenSymbol;
                 token.setAttribute('data-player-id', player.id);
-                token.title = `${player.name} (Player ${player.id})`;
+                const statusText = player.isEliminated ? ' - ELIMINATED' : (player.isActive ? ' - Current Turn' : '');
+                token.title = `${player.name} (Player ${player.id})${statusText}`;
                 tokensContainer.appendChild(token);
             });
             

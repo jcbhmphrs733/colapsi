@@ -7,6 +7,7 @@ export class Player {
         this.currentCard = null;
         this.score = 0;
         this.isActive = false;
+        this.isEliminated = false;
         this.moves = [];
     }
 
@@ -54,6 +55,7 @@ export class Player {
             currentCard: this.currentCard ? this.currentCard.value : null,
             score: this.score,
             isActive: this.isActive,
+            isEliminated: this.isEliminated,
             totalMoves: this.moves.length
         };
     }
@@ -76,6 +78,7 @@ export class Player {
         this.currentCard = null;
         this.score = 0;
         this.isActive = false;
+        this.isEliminated = false;
         this.moves = [];
     }
 
