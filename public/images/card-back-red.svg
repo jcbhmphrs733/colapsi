@@ -1,0 +1,78 @@
+<!-- Geometric Red Card Back -->
+<svg width="150" height="210" viewBox="0 0 150 210" xmlns="http://www.w3.org/2000/svg">
+  <!-- Card background with gradient -->
+  <defs>
+    <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ef5350;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#d32f2f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b71c1c;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Geometric triangle pattern -->
+    <pattern id="trianglePattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <polygon points="10,2 18,16 2,16" fill="#ffcdd2" opacity="0.3"/>
+      <polygon points="0,0 10,0 5,8" fill="#ffebee" opacity="0.2"/>
+      <polygon points="10,20 20,20 15,12" fill="#ffebee" opacity="0.2"/>
+    </pattern>
+    
+    <!-- Diamond pattern -->
+    <pattern id="diamondPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+      <polygon points="15,5 25,15 15,25 5,15" fill="#ff8a80" opacity="0.4"/>
+      <polygon points="15,8 22,15 15,22 8,15" fill="#ffffff" opacity="0.2"/>
+    </pattern>
+  </defs>
+  
+  <!-- Main background -->
+  <rect width="150" height="210" fill="url(#redGradient)" rx="8"/>
+  
+  <!-- Triangle pattern overlay -->
+  <rect width="150" height="210" fill="url(#trianglePattern)" rx="8"/>
+  
+  <!-- Central geometric design -->
+  <g transform="translate(75,105)">
+    <!-- Outer hexagon -->
+    <polygon points="0,-35 30,-17.5 30,17.5 0,35 -30,17.5 -30,-17.5" 
+             fill="none" stroke="#ffcdd2" stroke-width="2.5" opacity="0.8"/>
+    
+    <!-- Inner hexagon -->
+    <polygon points="0,-20 17.3,-10 17.3,10 0,20 -17.3,10 -17.3,-10" 
+             fill="none" stroke="#ffffff" stroke-width="2" opacity="0.9"/>
+    
+    <!-- Central diamond -->
+    <polygon points="0,-12 12,0 0,12 -12,0" 
+             fill="#ffffff" opacity="0.3"/>
+    
+    <!-- Intersecting lines -->
+    <line x1="-25" y1="0" x2="25" y2="0" stroke="#ff8a80" stroke-width="1.5" opacity="0.6"/>
+    <line x1="0" y1="-25" x2="0" y2="25" stroke="#ff8a80" stroke-width="1.5" opacity="0.6"/>
+    <line x1="-18" y1="-18" x2="18" y2="18" stroke="#ffcdd2" stroke-width="1" opacity="0.5"/>
+    <line x1="-18" y1="18" x2="18" y2="-18" stroke="#ffcdd2" stroke-width="1" opacity="0.5"/>
+  </g>
+  
+  <!-- Corner geometric elements -->
+  <g transform="translate(20,20)">
+    <polygon points="0,-8 8,0 0,8 -8,0" fill="#ff8a80" opacity="0.6"/>
+    <polygon points="0,-5 5,0 0,5 -5,0" fill="#ffffff" opacity="0.4"/>
+  </g>
+  
+  <g transform="translate(130,20)">
+    <polygon points="0,-8 8,0 0,8 -8,0" fill="#ff8a80" opacity="0.6"/>
+    <polygon points="0,-5 5,0 0,5 -5,0" fill="#ffffff" opacity="0.4"/>
+  </g>
+  
+  <g transform="translate(20,190)">
+    <polygon points="0,-8 8,0 0,8 -8,0" fill="#ff8a80" opacity="0.6"/>
+    <polygon points="0,-5 5,0 0,5 -5,0" fill="#ffffff" opacity="0.4"/>
+  </g>
+  
+  <g transform="translate(130,190)">
+    <polygon points="0,-8 8,0 0,8 -8,0" fill="#ff8a80" opacity="0.6"/>
+    <polygon points="0,-5 5,0 0,5 -5,0" fill="#ffffff" opacity="0.4"/>
+  </g>
+  
+  <!-- Additional geometric accents -->
+  <rect x="45" y="40" width="8" height="8" fill="#ffcdd2" opacity="0.5" transform="rotate(45 49 44)"/>
+  <rect x="97" y="70" width="6" height="6" fill="#ffffff" opacity="0.4" transform="rotate(45 100 73)"/>
+  <rect x="45" y="160" width="7" height="7" fill="#ff8a80" opacity="0.6" transform="rotate(45 48.5 163.5)"/>
+  <rect x="100" y="140" width="5" height="5" fill="#ffcdd2" opacity="0.7" transform="rotate(45 102.5 142.5)"/>
+</svg>

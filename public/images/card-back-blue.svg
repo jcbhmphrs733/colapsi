@@ -1,0 +1,25 @@
+<!-- Placeholder SVG for card back -->
+<svg width="150" height="210" viewBox="0 0 150 210" xmlns="http://www.w3.org/2000/svg">
+  <!-- Card background -->
+  <rect width="150" height="210" fill="#1565c0" rx="8"/>
+  
+  <!-- Decorative pattern -->
+  <defs>
+    <pattern id="cardPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="3" fill="#ffffff" opacity="0.3"/>
+    </pattern>
+  </defs>
+  
+  <!-- Apply pattern -->
+  <rect width="150" height="210" fill="url(#cardPattern)" rx="8"/>
+  
+  <!-- Central design -->
+  <circle cx="75" cy="105" r="40" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.6"/>
+  <circle cx="75" cy="105" r="25" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.4"/>
+  
+  <!-- Corner decorations -->
+  <circle cx="20" cy="20" r="8" fill="#ffffff" opacity="0.3"/>
+  <circle cx="130" cy="20" r="8" fill="#ffffff" opacity="0.3"/>
+  <circle cx="20" cy="190" r="8" fill="#ffffff" opacity="0.3"/>
+  <circle cx="130" cy="190" r="8" fill="#ffffff" opacity="0.3"/>
+</svg>

@@ -1,0 +1,329 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f2f1ee;
+    height: 100vh;
+    width: 100vw;
+    min-width: 815px;
+    min-height: 935px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto; /* Allow scrolling if content doesn't fit */
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 1.5vh;
+    width: min(90vw, 850px);
+    height: min(70vh, 650px);
+    min-width: 720px;
+    min-height: 500px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-items: center;
+}
+
+.card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 0.3vh;
+    text-align: center;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    /* Maintain 2.5:3.5 aspect ratio (width:height) - cards should be taller than wide */
+    aspect-ratio: 2.5 / 3.5;
+    /* Only set width, let height be determined by aspect ratio */
+    width: 80%;
+    cursor: pointer;
+    user-select: none;
+    position: relative; /* Added for player token positioning */
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Face up state */
+.card.face-up {
+    background-color: #ffffff;
+    border-color: #ddd;
+}
+
+.card.face-up:hover {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+}
+
+/* Face down state */
+.card.face-down {
+    background-color: #1565c0;
+    border-color: #0d47a1;
+    /* Background image for card back */
+    background-image: url('./public/images/card-back-blue.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* Fallback pattern if image doesn't load */
+    background-color: #1565c0;
+}
+
+.card.face-down:hover {
+    background-color: #1976d2;
+    border-color: #1565c0;
+    /* Keep the background image on hover */
+    background-image: url('./public/images/card-back-blue.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Alternative card back styles */
+.card.face-down.green {
+    background-color: #2e7d32;
+    border-color: #1b5e20;
+    background-image: url('./public/images/card-back-green.svg');
+}
+
+.card.face-down.green:hover {
+    background-color: #388e3c;
+    border-color: #2e7d32;
+    background-image: url('./public/images/card-back-green.svg');
+}
+
+.card.face-down.red {
+    background-color: #d32f2f;
+    border-color: #b71c1c;
+    background-image: url('./public/images/card-back-red.svg');
+}
+
+.card.face-down.red:hover {
+    background-color: #f44336;
+    border-color: #d32f2f;
+    background-image: url('./public/images/card-back-red.svg');
+}
+
+.card.face-down.grey {
+    background-color: #424242;
+    border-color: #212121;
+    background-image: url('./public/images/card-back-grey.svg');
+}
+
+.card.face-down.grey:hover {
+    background-color: #616161;
+    border-color: #424242;
+    background-image: url('./public/images/card-back-grey.svg');
+}
+
+/* Card back styling */
+.card-back {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2px, 0.5vh, 8px);
+    width: 100%;
+    height: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    /* Semi-transparent overlay to ensure position text is readable */
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+}
+
+.card-back-pattern {
+    font-size: clamp(16px, 4vh, 32px);
+    color: #ffffff;
+    line-height: 1;
+    text-align: center;
+    /* This is now hidden since we're using background image */
+    display: none;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2px, 0.5vh, 8px);
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-value {
+    font-weight: bold;
+    font-size: clamp(16px, 4vh, 32px);
+    line-height: 1;
+    text-align: center;
+}
+
+.card-value.red-suit {
+    color: #d32f2f;
+}
+
+.card-value.black-suit {
+    color: #333;
+}
+
+/* Color red suits */
+.card-value:contains('♥'),
+.card-value:contains('♦') {
+    color: #d32f2f;
+}
+
+.card-position {
+    font-size: clamp(5px, 1.3vh, 12px);
+    color: #666;
+    font-family: monospace;
+    line-height: 1.1;
+    white-space: nowrap;
+    margin-top: auto;
+}
+
+.card.face-down .card-position {
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+/* Player token styling */
+.player-tokens {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    max-width: 80%;
+    justify-content: center;
+    z-index: 10;
+}
+
+.player-token {
+    width: clamp(24px, 4vh, 40px);
+    height: clamp(24px, 4vh, 40px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(12px, 2.2vh, 20px);
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    pointer-events: auto;
+    z-index: 20;
+}
+
+.player-token:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* Game Controls */
+#gameControls {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px;
+    border-radius: 8px;
+    z-index: 1000;
+    font-family: Arial, sans-serif;
+    min-width: 40px;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+#gameControls:hover {
+    min-width: 200px;
+    width: 200px;
+    height: auto;
+    padding: 15px;
+}
+
+#controlsIcon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+#gameControls:hover #controlsIcon {
+    opacity: 0;
+}
+
+#cardBackSelector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#cardBackSelector label {
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#gameControls:hover #cardBackSelector label {
+    opacity: 1;
+}
+
+#gameControls:hover #cardBackSelector {
+    opacity: 1;
+}
+
+#cardBackStyle {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #333;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 20px;
+    width: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#gameControls:hover #cardBackStyle {
+    min-width: 170px;
+    width: 170px;
+}
+
+#cardBackStyle:hover {
+    background-color: #555;
+}
+
+#cardBackStyle option {
+    background-color: #333;
+    color: white;
+}

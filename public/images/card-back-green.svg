@@ -1,0 +1,64 @@
+<!-- Organic Green Card Back -->
+<svg width="150" height="210" viewBox="0 0 150 210" xmlns="http://www.w3.org/2000/svg">
+  <!-- Card background with gradient -->
+  <defs>
+    <radialGradient id="greenGradient" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" style="stop-color:#66bb6a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2e7d32;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Organic leaf pattern -->
+    <g id="leaf">
+      <path d="M0,0 Q5,-8 15,-5 Q10,5 0,0" fill="#81c784" opacity="0.6"/>
+      <path d="M0,0 Q-5,-8 -15,-5 Q-10,5 0,0" fill="#a5d6a7" opacity="0.4"/>
+    </g>
+    
+    <!-- Vine pattern -->
+    <pattern id="vinePattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M5,5 Q15,15 25,5 Q35,15 45,5" stroke="#c8e6c9" stroke-width="1.5" fill="none" opacity="0.3"/>
+      <circle cx="15" cy="8" r="2" fill="#e8f5e8" opacity="0.5"/>
+      <circle cx="25" cy="8" r="1.5" fill="#c8e6c9" opacity="0.6"/>
+    </pattern>
+  </defs>
+  
+  <!-- Main background -->
+  <rect width="150" height="210" fill="url(#greenGradient)" rx="8"/>
+  
+  <!-- Vine pattern overlay -->
+  <rect width="150" height="210" fill="url(#vinePattern)" rx="8"/>
+  
+  <!-- Central organic spiral -->
+  <g transform="translate(75,105)">
+    <path d="M0,0 Q20,-20 35,0 Q20,40 -15,25 Q-35,-5 -10,-30 Q25,-15 15,15 Q-5,25 -20,5 Q-10,-15 5,-5" 
+          fill="none" stroke="#e8f5e8" stroke-width="2.5" opacity="0.7"/>
+    <path d="M0,0 Q10,-10 18,0 Q10,20 -8,13 Q-18,-3 -5,-15 Q13,-8 8,8 Q-3,13 -10,3 Q-5,-8 3,-3" 
+          fill="none" stroke="#c8e6c9" stroke-width="2" opacity="0.8"/>
+  </g>
+  
+  <!-- Organic corner elements -->
+  <g transform="translate(25,25)">
+    <use href="#leaf" transform="rotate(45)"/>
+    <use href="#leaf" transform="rotate(135)" opacity="0.7"/>
+  </g>
+  
+  <g transform="translate(125,25)">
+    <use href="#leaf" transform="rotate(135)"/>
+    <use href="#leaf" transform="rotate(225)" opacity="0.7"/>
+  </g>
+  
+  <g transform="translate(25,185)">
+    <use href="#leaf" transform="rotate(-45)"/>
+    <use href="#leaf" transform="rotate(45)" opacity="0.7"/>
+  </g>
+  
+  <g transform="translate(125,185)">
+    <use href="#leaf" transform="rotate(-135)"/>
+    <use href="#leaf" transform="rotate(-45)" opacity="0.7"/>
+  </g>
+  
+  <!-- Small organic details -->
+  <circle cx="40" cy="60" r="3" fill="#a5d6a7" opacity="0.6"/>
+  <circle cx="110" cy="80" r="2" fill="#c8e6c9" opacity="0.7"/>
+  <circle cx="35" cy="140" r="2.5" fill="#e8f5e8" opacity="0.5"/>
+  <circle cx="115" cy="160" r="2" fill="#81c784" opacity="0.6"/>
+</svg>
