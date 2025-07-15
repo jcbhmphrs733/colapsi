@@ -41,15 +41,23 @@ export class RouteManager {
         
         // Check if player can use any special ability
         const availableAbility = this.gameManager.canUseAbility(player);
-        if (availableAbility) {
+        if (availableAbility && availableAbility !== 'spades' && availableAbility !== 'diamonds') {
+            // Start ability for non-passive abilities (hearts, clubs)
             const abilityStarted = this.gameManager.startAbility(player, availableAbility);
             if (abilityStarted) {
                 return; // Ability phase started, route planning will begin after ability completion/skip
             }
         }
         
-        // Otherwise start normal route planning
-        this.beginRoutePlanning(player);
+        // For spades, diamonds, or normal players, start route planning directly
+        // Spades and diamonds abilities are passive and handled automatically in beginRoutePlanning
+        const options = {};
+        if (availableAbility === 'spades') {
+            options.allowPhantomStep = true;
+        } else if (availableAbility === 'diamonds') {
+            options.allowDiagonalMovement = true;
+        }
+        this.beginRoutePlanning(player, options);
     }
 
     // Start heart healing phase
@@ -79,7 +87,7 @@ export class RouteManager {
     }
 
     // Begin normal route planning
-    beginRoutePlanning(player) {
+    beginRoutePlanning(player, options = {}) {
         const startCard = player.currentCard;
         const cardValue = parseInt(startCard.value.charAt(0)); // Extract number from card value
         
@@ -90,7 +98,11 @@ export class RouteManager {
             currentCard: startCard,
             route: [startCard], // Route includes starting card
             maxSteps: cardValue,
-            usedCards: new Set([startCard])
+            usedCards: new Set([startCard]),
+            allowPhantomStep: options.allowPhantomStep || false,
+            phantomStepUsed: false,
+            allowDiagonalMovement: options.allowDiagonalMovement || false,
+            immediatelyReady: options.immediatelyReady || false
         };
         
         // Immediately highlight starting card with index 0
@@ -100,10 +112,32 @@ export class RouteManager {
         document.body.style.cursor = 'crosshair';
         
         // Show instructions
-        this.showRouteInstructions(player.name, cardValue);
+        if (options.allowPhantomStep) {
+            this.showPhantomStepRouteInstructions(player.name, cardValue);
+        } else if (options.allowDiagonalMovement) {
+            this.showDiagonalMoveRouteInstructions(player.name, cardValue);
+        } else {
+            this.showRouteInstructions(player.name, cardValue);
+        }
         
         console.log(`Route planning active: Player must make ${cardValue} steps from ${startCard.value}`);
         console.log('Use WASD keys to navigate, Enter to confirm, Escape to cancel');
+        
+        // If immediatelyReady with firstMovement, process that movement now
+        if (options.immediatelyReady && options.firstMovement) {
+            console.log(`Processing immediate first movement: ${options.firstMovement}`);
+            // Convert movement key to direction and process immediately
+            const directions = {
+                'w': [-1, 0], 'arrowup': [-1, 0],
+                's': [1, 0], 'arrowdown': [1, 0], 
+                'a': [0, -1], 'arrowleft': [0, -1],
+                'd': [0, 1], 'arrowright': [0, 1]
+            };
+            const direction = directions[options.firstMovement];
+            if (direction) {
+                this.moveRouteSelection(direction[0], direction[1]);
+            }
+        }
     }
 
     // Setup keyboard handlers for WASD and arrow key navigation
@@ -148,6 +182,27 @@ export class RouteManager {
                 case 'arrowright':
                     this.moveRouteSelection(0, 1);  // Right
                     break;
+                // Diagonal movement (only available with diamond ability)
+                case 'q':
+                    if (this.routePlanningState.allowDiagonalMovement) {
+                        this.moveRouteSelection(-1, -1); // Up-Left
+                    }
+                    break;
+                case 'e':
+                    if (this.routePlanningState.allowDiagonalMovement) {
+                        this.moveRouteSelection(-1, 1); // Up-Right
+                    }
+                    break;
+                case 'z':
+                    if (this.routePlanningState.allowDiagonalMovement) {
+                        this.moveRouteSelection(1, -1); // Down-Left
+                    }
+                    break;
+                case 'c':
+                    if (this.routePlanningState.allowDiagonalMovement) {
+                        this.moveRouteSelection(1, 1); // Down-Right
+                    }
+                    break;
                 case 'enter':
                     this.finishRoute();
                     break;
@@ -191,7 +246,17 @@ export class RouteManager {
             } else {
                 // Provide more specific feedback
                 if (!targetCard.isFaceUpCard()) {
-                    console.log('Invalid move: cannot use face-down cards in route');
+                    if (this.routePlanningState.allowPhantomStep) {
+                        if (this.routePlanningState.phantomStepUsed) {
+                            console.log('Invalid move: phantom step already used in this route');
+                        } else if (targetCard.players.length > 0) {
+                            console.log('Invalid move: cannot step on face-down cards with other players');
+                        } else {
+                            console.log('Invalid move: cannot end route on face-down card');
+                        }
+                    } else {
+                        console.log('Invalid move: cannot use face-down cards in route');
+                    }
                 } else if (this.routePlanningState.usedCards.has(targetCard)) {
                     console.log('Invalid move: card already used in this route');
                 } else if (this.routePlanningState.route.length >= this.routePlanningState.maxSteps + 1) {
@@ -232,6 +297,13 @@ export class RouteManager {
         const removedCard = this.routePlanningState.route.pop();
         this.routePlanningState.usedCards.delete(removedCard);
         
+        // Check if we're removing a phantom step
+        if (!removedCard.isFaceUpCard() && this.routePlanningState.allowPhantomStep) {
+            // Reset phantom step usage since we're abandoning it
+            this.routePlanningState.phantomStepUsed = false;
+            console.log('Phantom step abandoned - can use another face-down card');
+        }
+        
         // Update current card to the new last card in route
         this.routePlanningState.currentCard = this.routePlanningState.route[this.routePlanningState.route.length - 1];
         
@@ -257,10 +329,35 @@ export class RouteManager {
             return false;
         }
         
-        // Can't use face-down cards
+        // Handle face-down cards
         if (!card.isFaceUpCard()) {
-            console.log(`Cannot use face-down card: ${card.value}`);
-            return false;
+            // Check if phantom step is allowed
+            if (this.routePlanningState.allowPhantomStep) {
+                // Check if phantom step already used
+                if (this.routePlanningState.phantomStepUsed) {
+                    console.log('Cannot use face-down card: phantom step already used in this route');
+                    return false;
+                }
+                
+                // Check if this would be the final step
+                const wouldBeFinalStep = (this.routePlanningState.route.length === this.routePlanningState.maxSteps);
+                if (wouldBeFinalStep) {
+                    console.log('Cannot end route on face-down card');
+                    return false;
+                }
+                
+                // Check if card has players on it
+                if (card.players.length > 0) {
+                    console.log('Cannot use face-down card with other players on it');
+                    return false;
+                }
+                
+                // Phantom step is valid
+                return true;
+            } else {
+                console.log(`Cannot use face-down card: ${card.value}`);
+                return false;
+            }
         }
         
         // Check if this would be the final step in the route
@@ -280,6 +377,12 @@ export class RouteManager {
         this.routePlanningState.route.push(card);
         this.routePlanningState.usedCards.add(card);
         this.routePlanningState.currentCard = card;
+        
+        // Track phantom step usage
+        if (!card.isFaceUpCard() && this.routePlanningState.allowPhantomStep) {
+            this.routePlanningState.phantomStepUsed = true;
+            console.log('Phantom step used on face-down card');
+        }
         
         // Highlight the card with route index
         const routeIndex = this.routePlanningState.route.length - 1;
@@ -528,6 +631,92 @@ export class RouteManager {
         if (instructions) {
             instructions.remove();
         }
+    }
+
+    // Show instructions for phantom step route planning
+    showPhantomStepRouteInstructions(playerName, steps) {
+        // Remove any existing instructions
+        const existingInstructions = document.getElementById('route-instructions');
+        if (existingInstructions) {
+            existingInstructions.remove();
+        }
+        
+        // Create instruction panel
+        const instructions = document.createElement('div');
+        instructions.id = 'route-instructions';
+        instructions.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(33, 33, 33, 0.9);
+                color: white;
+                padding: 15px;
+                border-radius: 8px;
+                z-index: 1000;
+                font-family: Arial, sans-serif;
+                max-width: 250px;
+            ">
+                <h4 style="margin: 0 0 10px 0; color: ${this.routePlanningState.player.color};">
+                    ${playerName} - Phantom Step ♠
+                </h4>
+                <p style="margin: 5px 0;">Must make exactly <strong>${steps}</strong> steps</p>
+                <p style="margin: 5px 0; font-size: 12px;">
+                    • May include <strong>one face-down card</strong><br>
+                    • Cannot end on face-down card<br>
+                    • WASD/Arrow Keys: Navigate/Backtrack<br>
+                    • Enter: Confirm route • Escape: Cancel
+                </p>
+                <p style="margin: 5px 0; font-size: 11px; opacity: 0.8;">
+                    Steps: 0/${steps} (Starting position)
+                </p>
+            </div>
+        `;
+        
+        document.body.appendChild(instructions);
+    }
+
+    // Show instructions for diagonal movement route planning
+    showDiagonalMoveRouteInstructions(playerName, steps) {
+        // Remove any existing instructions
+        const existingInstructions = document.getElementById('route-instructions');
+        if (existingInstructions) {
+            existingInstructions.remove();
+        }
+        
+        // Create instruction panel
+        const instructions = document.createElement('div');
+        instructions.id = 'route-instructions';
+        instructions.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(139, 0, 0, 0.9);
+                color: white;
+                padding: 15px;
+                border-radius: 8px;
+                z-index: 1000;
+                font-family: Arial, sans-serif;
+                max-width: 270px;
+            ">
+                <h4 style="margin: 0 0 10px 0; color: ${this.routePlanningState.player.color};">
+                    ${playerName} - Diagonal Movement ♦
+                </h4>
+                <p style="margin: 5px 0;">Must make exactly <strong>${steps}</strong> steps</p>
+                <p style="margin: 5px 0; font-size: 12px;">
+                    • WASD/Arrow Keys: Cardinal directions<br>
+                    • <strong>Q/E</strong>: Diagonal up-left/up-right<br>
+                    • <strong>Z/C</strong>: Diagonal down-left/down-right<br>
+                    • Enter: Confirm route • Escape: Cancel
+                </p>
+                <p style="margin: 5px 0; font-size: 11px; opacity: 0.8;">
+                    Steps: 0/${steps} (Starting position)
+                </p>
+            </div>
+        `;
+        
+        document.body.appendChild(instructions);
     }
 
     // Getter for external access to route planning state

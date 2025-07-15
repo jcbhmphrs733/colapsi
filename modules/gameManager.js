@@ -1,5 +1,5 @@
 import { Player } from './player.js';
-import { AbilityManager } from './abilities.js';
+import { AbilityManager } from './abilities/abilityManager.js';
 
 export class GameManager {
     constructor(gridManager) {
